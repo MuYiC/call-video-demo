@@ -26,6 +26,7 @@ public class ChatManager {
 
 
     private VideoChatViewActivity activity;
+    private LoginActivity loginActivity;
 
     private RemoteInvitation remoteInvitation;
     private LocalInvitation localInvitation;
@@ -36,6 +37,7 @@ public class ChatManager {
     private SendMessageOptions mSendMsgOptions;
     private List<RtmClientListener> mListenerList = new ArrayList<>();
     private RtmMessagePool mMessagePool = new RtmMessagePool();
+
 
     public ChatManager(Context context) {
         mContext = context;
@@ -128,19 +130,22 @@ public class ChatManager {
                 ChatManager.this.localInvitation = localInvitation;
                 Intent intent = new Intent(mContext, VideoChatViewActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                intent.putExtra("call",1);//主叫
+                intent.putExtra("call", 1);//主叫
                 mContext.startActivity(intent);
             }
 
             @Override
             public void onLocalInvitationAccepted(LocalInvitation localInvitation, String s) {
                 Log.d(TAG, "onLocalInvitationAccepted 被叫已接受呼叫邀请:" + localInvitation.toString() + ", s : " + s);
+                if (loginActivity != null) {
+                    loginActivity.onUserAccept(localInvitation.getCalleeId());
+                }
             }
 
             @Override
             public void onLocalInvitationRefused(LocalInvitation localInvitation, String s) {
                 Log.d(TAG, "onLocalInvitationRefused 被叫已拒绝呼叫邀请:" + localInvitation.toString() + ", s : " + s);
-                if (activity != null){
+                if (activity != null) {
                     activity.finish();
                 }
             }
@@ -152,7 +157,7 @@ public class ChatManager {
 
             @Override
             public void onLocalInvitationFailure(LocalInvitation localInvitation, int i) {
-                Log.d(TAG, "onLocalInvitationFailure 发出的呼叫邀请过程失败:" + localInvitation.toString() + "errorcode :"+i);
+                Log.d(TAG, "onLocalInvitationFailure 发出的呼叫邀请过程失败:" + localInvitation.toString() + "errorcode :" + i);
             }
 
             @Override
@@ -161,7 +166,7 @@ public class ChatManager {
                 ChatManager.this.remoteInvitation = remoteInvitation;
                 Intent intent = new Intent(mContext, VideoChatViewActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                intent.putExtra("call",2);//被叫
+                intent.putExtra("call", 2);//被叫
                 mContext.startActivity(intent);
             }
 
@@ -179,11 +184,14 @@ public class ChatManager {
             @Override
             public void onRemoteInvitationCanceled(RemoteInvitation remoteInvitation) {
                 Log.d(TAG, "onRemoteInvitationCanceled 主叫已取消呼叫邀请:" + remoteInvitation.toString());
+                if (activity != null) {
+                    activity.finish();
+                }
             }
 
             @Override
             public void onRemoteInvitationFailure(RemoteInvitation remoteInvitation, int i) {
-                Log.d(TAG, "onRemoteInvitationFailure 来自主叫的邀请过程失败:" + remoteInvitation.toString() + "errorCode :" +i);
+                Log.d(TAG, "onRemoteInvitationFailure 来自主叫的邀请过程失败:" + remoteInvitation.toString() + "errorCode :" + i);
             }
         });
     }
@@ -209,6 +217,10 @@ public class ChatManager {
 
     public void setActivity(VideoChatViewActivity activity) {
         this.activity = activity;
+    }
+
+    public void setLoginActivity(LoginActivity activity) {
+        this.loginActivity = activity;
     }
 
     public void registerListener(RtmClientListener listener) {

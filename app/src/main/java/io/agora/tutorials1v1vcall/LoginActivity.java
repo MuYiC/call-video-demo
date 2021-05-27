@@ -13,6 +13,9 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import io.agora.rtm.ErrorInfo;
 import io.agora.rtm.LocalInvitation;
 import io.agora.rtm.ResultCallback;
@@ -32,17 +35,24 @@ public class LoginActivity extends Activity {
     private RtmCallManager rtmCallManager;
     private RtmClient mRtmClient;
     private boolean mIsInChat = false;
-    private LocalInvitation invitation;
+    //private LocalInvitation invitation;
     private static final String[] REQUESTED_PERMISSIONS = {
             Manifest.permission.RECORD_AUDIO,
             Manifest.permission.CAMERA,
             Manifest.permission.WRITE_EXTERNAL_STORAGE
     };
 
+    private List<String> callUserList = new ArrayList<>();
+    private List<LocalInvitation> localInvitation = new ArrayList<>();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+
+        callUserList.add("1234");
+        callUserList.add("5678");
+        callUserList.add("7890");
 
         mUserIdEditText = findViewById(R.id.user_id);
         mLoginBtn = findViewById(R.id.button_login);
@@ -51,12 +61,13 @@ public class LoginActivity extends Activity {
         mDesUserIdEt = findViewById(R.id.user_des);
 
         ChatManager mChatManager = AGApplication.the().getChatManager();
+        mChatManager.setLoginActivity(this);
         rtmCallManager = mChatManager.getRtmCallManager();
         mRtmClient = mChatManager.getRtmClient();
 
-        checkSelfPermission(REQUESTED_PERMISSIONS[0], PERMISSION_REQ_ID) ;
-                checkSelfPermission(REQUESTED_PERMISSIONS[1], PERMISSION_REQ_ID) ;
-                checkSelfPermission(REQUESTED_PERMISSIONS[2], PERMISSION_REQ_ID) ;
+        checkSelfPermission(REQUESTED_PERMISSIONS[0], PERMISSION_REQ_ID);
+        checkSelfPermission(REQUESTED_PERMISSIONS[1], PERMISSION_REQ_ID);
+        checkSelfPermission(REQUESTED_PERMISSIONS[2], PERMISSION_REQ_ID);
     }
 
     private boolean checkSelfPermission(String permission, int requestCode) {
@@ -87,42 +98,66 @@ public class LoginActivity extends Activity {
 
     /**
      * 呼叫
+     *
      * @param v
      */
     public void onClickCall(View v) {
-        String desUserid = mDesUserIdEt.getText().toString();
+        // String desUserid = mDesUserIdEt.getText().toString();
 
-        invitation = rtmCallManager.createLocalInvitation(desUserid);
-        invitation.setChannelId("rtstest");
-        rtmCallManager.sendLocalInvitation(invitation, new ResultCallback<Void>() {
-            @Override
-            public void onSuccess(Void aVoid) {
-                Log.d(TAG, "call send onSuccess");
-            }
+        for (String desUserid : callUserList) {
+            LocalInvitation invitation = rtmCallManager.createLocalInvitation(desUserid);
+            invitation.setChannelId("rtstest");
 
-            @Override
-            public void onFailure(ErrorInfo errorInfo) {
-                Log.e(TAG, "call send fail : " + errorInfo.toString());
-            }
-        });
+            localInvitation.add(invitation);
+
+            rtmCallManager.sendLocalInvitation(invitation, new ResultCallback<Void>() {
+                @Override
+                public void onSuccess(Void aVoid) {
+                    Log.d(TAG, "call send onSuccess");
+                }
+
+                @Override
+                public void onFailure(ErrorInfo errorInfo) {
+                    Log.e(TAG, "call send fail : " + errorInfo.toString());
+                }
+            });
+        }
+
     }
 
     /**
      * 取消呼叫
+     *
      * @param v
      */
     public void onClickCancel(View v) {
-       rtmCallManager.cancelLocalInvitation(invitation, new ResultCallback<Void>() {
-           @Override
-           public void onSuccess(Void aVoid) {
-               Log.d(TAG, "cancel onSuccess");
-           }
+        for (LocalInvitation localInvitation : this.localInvitation) {
+            cancelCall(localInvitation);
+        }
+    }
 
-           @Override
-           public void onFailure(ErrorInfo errorInfo) {
-               Log.e(TAG, "cancel fail : " + errorInfo.toString());
-           }
-       });
+    private void cancelCall(LocalInvitation invitation) {
+        rtmCallManager.cancelLocalInvitation(invitation, new ResultCallback<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+                Log.d(TAG, "cancel onSuccess");
+            }
+
+            @Override
+            public void onFailure(ErrorInfo errorInfo) {
+                Log.e(TAG, "cancel fail : " + errorInfo.toString());
+            }
+        });
+    }
+
+    public void onUserAccept(String uid) {
+        mUserId = uid;
+
+        for (LocalInvitation localInvitation : this.localInvitation) {
+            if (!localInvitation.getCalleeId().equals(uid)) {
+                cancelCall(localInvitation);
+            }
+        }
     }
 
     @Override

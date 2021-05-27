@@ -110,4 +110,18 @@
         android:layout_above="@id/control_panel"
         android:layout_marginBottom="20dp"
         android:scaleType="centerCrop"/>
+
+    <Button
+        android:id="@+id/btn_opendoor"
+        android:layout_width="@dimen/call_button_size"
+        android:layout_height="@dimen/call_button_size"
+        android:layout_centerInParent="true"
+        android:onClick="onOpenDoorClicked"
+        android:src="@drawable/btn_endcall"
+        android:text="开门"
+        android:textSize="18sp"
+        android:layout_above="@id/control_panel"
+        android:layout_marginBottom="100dp"
+        android:background="@color/blue"
+        android:visibility="gone"/>
 </RelativeLayout>

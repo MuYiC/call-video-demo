@@ -7,9 +7,12 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.SurfaceView;
 import android.view.View;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
+
+import java.io.UnsupportedEncodingException;
 
 import io.agora.rtc.Constants;
 import io.agora.rtc.IRtcEngineEventHandler;
@@ -45,6 +48,7 @@ public class VideoChatViewActivity extends AppCompatActivity {
     private ImageView mCallBtn;
     private ImageView mMuteBtn;
     private ImageView mSwitchCameraBtn;
+    private Button mOpenddoorBtn;
 
     // Customized logger view
     private LoggerRecyclerView mLogView;
@@ -66,6 +70,7 @@ public class VideoChatViewActivity extends AppCompatActivity {
                 @Override
                 public void run() {
                     mLogView.logI("Join channel success, uid: " + (uid & 0xFFFFFFFFL));
+                    mOpenddoorBtn.setVisibility(View.VISIBLE);
                 }
             });
         }
@@ -79,7 +84,7 @@ public class VideoChatViewActivity extends AppCompatActivity {
          */
         @Override
         public void onRemoteVideoStateChanged(int uid, int state, int reason, int elapsed) {
-            if (state == Constants.REMOTE_VIDEO_STATE_STARTING){
+            if (state == Constants.REMOTE_VIDEO_STATE_STARTING) {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -182,6 +187,7 @@ public class VideoChatViewActivity extends AppCompatActivity {
         mCallBtn = findViewById(R.id.btn_call);
         mMuteBtn = findViewById(R.id.btn_mute);
         mSwitchCameraBtn = findViewById(R.id.btn_switch_camera);
+        mOpenddoorBtn = findViewById(R.id.btn_opendoor);
 
         mLogView = findViewById(R.id.log_recycler_view);
 
@@ -317,6 +323,19 @@ public class VideoChatViewActivity extends AppCompatActivity {
         mRtcEngine.muteLocalAudioStream(mMuted);
         int res = mMuted ? R.drawable.btn_mute : R.drawable.btn_unmute;
         mMuteBtn.setImageResource(res);
+    }
+
+    /**
+     * 开门
+     * @param view
+     */
+    public void onOpenDoorClicked(View view) throws UnsupportedEncodingException {
+        String opendoor = "cloud_message_opendoor";
+        int messageId = mRtcEngine.createDataStream(true, true);
+        int statuscode = mRtcEngine.sendStreamMessage(messageId, opendoor.getBytes("UTF-8"));
+        if (statuscode == 0) {
+            Log.d(TAG, "open door message send success");
+        }
     }
 
     /**
